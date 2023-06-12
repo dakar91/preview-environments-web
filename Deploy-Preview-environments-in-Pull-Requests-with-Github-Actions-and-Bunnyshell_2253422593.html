@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sales : Deploy Preview environments in Pull Requests with Github Actions and Bunnyshell</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Sales</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Sales : Deploy Preview environments in Pull Requests with Github Actions and Bunnyshell
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                        
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Grig Duta</span>, last modified on Jun 12, 2023
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-Introduction">Introduction</h2><p>The previous guide provided instructions on how to set up an environment in Bunnyshell from a GitHub repository. In this guide, we will explain how to use GitHub Actions and Bunnyshell together to create dynamic preview environments for pull requests. This combination allows for testing changes in a live environment before merging them into the main branch, which can help detect issues early on in the development process.</p><p /><h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-WhatarePreviewEnvironments">What are Preview Environments</h2><p>Preview environments, also known as preview apps or staging environments, are temporary environments spun up for each pull request. They serve as a sandbox where developers can test their changes in a live, isolated environment, separate from the main production or development environments. This approach allows for focused testing and review of changes, aiding in the early detection of potential issues. While they're not exact replicas of the production environment, they're close enough to provide a reliable approximation of how the changes will behave in production.</p><p /><h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-UnderstandingtheBunnyshellConfigurationfile">Understanding the Bunnyshell Configuration file</h2><p>The <code>bunnyshell.yaml</code> file is a configuration file that Bunnyshell uses to create environments. It specifies the details of the environment, such as the services it should include, the resources it should use, and any environment variables it needs. Each service in the <code>bunnyshell.yaml</code> file corresponds to a container in the environment, and the configuration options for each service correspond to the options you would specify in a <code>docker-compose.yaml</code> file.</p><p /><h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-UnderstandingGithubActionsWorkflows">Understanding Github Actions Workflows</h2><p>GitHub Actions is a robust CI/CD platform that automates software workflows within your GitHub repository. In the context of this guide, GitHub Actions plays a crucial role in creating dynamic preview environments for each pull request. This means that for every proposed change via a pull request, an automatic, live environment is spun up, enabling you to see your modifications in real-time.</p><p /><h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-Prerequisites"><strong>Prerequisites</strong></h2><ul><li><p>A <a class="external-link" href="https://github.com/login" rel="nofollow">Github account</a> to with your application code</p></li><li><p>A working <a href="https://bunnyshell.atlassian.net/wiki/spaces/SAL/pages/2252898328/The+fastest+way+to+deploy+a+Docker-Compose+based+app+on+Kubernetes" data-linked-resource-id="2252898328" data-linked-resource-version="14" data-linked-resource-type="page">Bunnyshell app environment</a> or <a class="external-link" href="https://www.bunnyshell.com/templates/" rel="nofollow">template</a></p></li></ul><p /><h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-Steps"><strong>Steps</strong></h2><ol start="1"><li><p><a href="#Add-the-bunnyshell.yaml-to-the-Github-repository" rel="nofollow">Add the <em>bunnyshell.yaml</em> to the Github repository</a></p></li><li><p><a href="#Create-a-Github-Actions-workflow-to-DEPLOY-preview-environments" rel="nofollow">Create a new Github Actions workflow to DEPLOY previews</a></p></li><li><p><a href="#Create-a-Github-Actions-workflow-to-CLOSE-preview-environments" rel="nofollow">Create a Github Actions workflow to CLOSE previews</a></p></li><li><p><a href="#Test-the-workflows" rel="nofollow">Test the workflows</a></p></li><li><p><a href="#Testing-and-troubleshooting-the-workflow" rel="nofollow">Troubleshooting common issues</a></p></li></ol><p /><h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-Addthebunnyshell.yamltotheGithubrepository">Add the <code>bunnyshell.yaml</code> to the Github repository</h2><ol start="1"><li><p>Navigate to your environment page in the Bunnyshell UI, then click on the <em><strong><span style="color: rgb(64,50,148);">Configuration</span></strong></em> button.</p></li><li><p>Click on the copy to clipboard icon on the upper right side of the text editor to select and copy the YAML configuration.</p></li><li><p>Create a new branch locally in your project.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: bash; gutter: false; theme: Confluence" data-theme="Confluence">git checkout -b add-preview-environments</pre>
+</div></div></li><li><p>Create a new directory in your local project called <code>_bunnyshell</code></p></li><li><p><a class="external-link" href="https://docs.github.com/en/repositories/working-with-files/managing-files/creating-new-files" rel="nofollow">Create a new file</a> called <code>bunnyshell.yaml</code> and paste the YAML configuration previously copied from the Bunnyshell UI editor.</p></li><li><p>Add changes to the staging area and create a commit.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: bash; gutter: false; theme: Confluence" data-theme="Confluence">git add .
+git commit -m &quot;Add bunnyshell.yaml for preview environments at pull request&quot;</pre>
+</div></div></li></ol><p /><h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-CreateaGithubActionsworkflowtoDEPLOYpreviewenvironments">Create a Github Actions workflow to DEPLOY preview environments</h2><ol start="1"><li><p>Create a <code>.github/workflows</code> directory in your repository on GitHub or local project if this directory does not already exist.</p></li><li><p>In the <code>.github/workflows</code> directory, <a class="external-link" href="https://docs.github.com/en/repositories/working-with-files/managing-files/creating-new-files" rel="nofollow">create</a> a file named <code>bunnyshell-previews-deploy.yml</code>.</p></li><li><p>Copy the following YAML snippets to the <code>bunnyshell-previews-deploy.yml</code> file.<br/><br/><strong>Workflow Name and Event Triggers</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">name: Bunnyshell Update PR Environment
+concurrency: bns-pr-${{ github.event.number }}
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+    branches:
+      - main</pre>
+</div></div><p>This snippet defines the name of the workflow and the events that trigger it. The workflow is triggered when a pull request is opened, synchronized, or reopened on the <code>main</code> branch.<br/><br/><strong>Job Definition</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">jobs:
+  deploy:
+    name: Deploy PR Environment
+    runs-on: ubuntu-latest</pre>
+</div></div><p>This snippet defines a job called <code>deploy</code> that runs on the latest version of Ubuntu. This job is responsible for deploying the PR preview environment.<br/><br/><strong>Checkout Step</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2</pre>
+</div></div><p>This snippet defines a step that checks out your repository using the <code>checkout</code> action. This step is necessary to access your repository's code within the job.<br/><br/><strong>Prepare Variables Step</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">      - name: Prepare vars
+        run: |
+          echo &quot;SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`&quot; &gt;&gt; &quot;$GITHUB_ENV&quot;
+          echo &quot;BNS_ENV_NAME=PR #${{ github.event.number }}&quot; &gt;&gt; &quot;$GITHUB_ENV&quot;
+</pre>
+</div></div><p>This snippet defines a step that prepares some environment variables for use in later steps. It sets <code>SHORT_SHA</code> to the first 8 characters of the commit SHA and <code>BNS_ENV_NAME</code> to a string that includes the pull request number. These variables are used in the Bunnyshell action to uniquely identify the environment for each pull request.<br/><br/><strong>Deploy Environment Step</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">      - name: Deploy environment with Bunnyshell
+        uses: bunnyshell/deploy-pr-environment@v1
+        id: deploy
+        with:
+          token: ${{ secrets.BUNNYSHELL_ACCESS_TOKEN }}
+          organisation-id: ${{ vars.BUNNYSHELL_ORGANISATION_ID }}
+          project-id: ${{ vars.BUNNYSHELL_PROJECT_ID }}
+          environment-name: ${{ env.BNS_ENV_NAME }}
+          bunnyshell-yaml-path: _bunnyshell/bunnyshell.yaml
+          git-branch: $GITHUB_HEAD_REF</pre>
+</div></div><p><br/>This snippet defines a step that uses the Bunnyshell GitHub Action to deploy the PR environment. It passes several inputs to the action, including a token, organisation ID, project ID, environment name, path to the Docker Compose file, and the name of the Git branch.<br/><br/>Behind the scenes, the Bunnyshell action is doing several things:</p><ul><li><p>It checks if an environment with the given name already exists. If it does, it updates the environment; if it doesn't, it creates a new environment.</p></li><li><p>It prepares the Bunnyshell YAML file by changing the <code>main </code>branch to the one with the open PR.</p></li><li><p>It builds the container images and deploys them using the the provided access token.</p></li><li><p>The result of the deployment are the <code>envCreated</code>, <code>appEndpointUrl</code>, and <code>apiEndpointUrl</code> outputs which are posted on the PR.<br/></p></li></ul><p><br/><strong>Comment PR Step</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v2
+        if: &quot;${{ steps.deploy.outputs.envCreated == &#39;1&#39; }}&quot;
+        with:
+          message: |
+            *Bunnyshell* Preview Environment created with the following endpoints:
+            - ${{ steps.deploy.outputs.appEndpointUrl }}
+            - ${{ steps.deploy.outputs.apiEndpointUrl }}</pre>
+</div></div><p>This snippet defines a step that uses the <code>actions-comment-pull-request</code> action to comment on the pull request. This step only runs if the <code>envCreated</code> output of the Bunnyshell action is <code>'1'</code>, indicating that an environment was successfully created. The comment includes the URLs of the deployed endpoints, which are obtained from the <code>appEndpointUrl</code> and <code>apiEndpointUrl</code> outputs of the Bunnyshell action.<br/></p></li><li><p>Add changes to the staging area and create a commit.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: bash; gutter: false; theme: Confluence" data-theme="Confluence">git add .
+git commit -m &quot;Add actions workflow to deploy preview environments in pull requests&quot;</pre>
+</div></div><p><br/></p><span class="confluence-embedded-file-wrapper image-center-wrapper"><img class="confluence-embedded-image image-center" loading="lazy" src="attachments/2253422593/2255912964.png" data-image-src="attachments/2253422593/2255912964.png" data-height="835" data-width="972" data-unresolved-comment-count="0" data-linked-resource-id="2255912964" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="github-actions-workflow-diagram-preview-environments-bunnyshell-kubernetes.png" data-base-url="https://bunnyshell.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2253422593" data-linked-resource-container-version="14" data-media-id="208e796d-9a1a-4bd6-8b9b-b53b7add0cd2" data-media-type="file"></span><p /></li></ol><h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-CreateaGithubActionsworkflowtoCLOSEpreviewenvironments">Create a Github Actions workflow to CLOSE preview environments</h2><ol start="1"><li><p>In the <code>.github/workflows</code> directory, <a class="external-link" href="https://docs.github.com/en/repositories/working-with-files/managing-files/creating-new-files" rel="nofollow">create</a> a file named <code>bunnyshell-previews-close.yml</code>.</p></li><li><p>Copy the following YAML snippets to the <code>bunnyshell-previews-close.yml</code> file.<br/><br/><strong>Workflow Name and Event Triggers</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">name: Bunnyshell Delete PR Environment
+concurrency:
+  group: bns-pr-${{ github.event.number }}
+on:
+  pull_request_target:
+    types: [closed]
+    branches:
+      - main</pre>
+</div></div><p>This snippet defines the name of the workflow and the events that trigger it. The workflow is triggered when a pull request is opened, synchronized, or reopened on the <code>main</code> branch.<br/><br/><br/><strong>Job Definition, Checkout code and Prepare variables</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">jobs:
+  deploy:
+  name: Delete PR Environment
+  runs-on: ubuntu-latest
+  steps:
+    - name: Check out the repo
+      uses: actions/checkout@v2
+    - name: Prepare vars
+      run: |
+      echo &quot;BNS_ENV_NAME=PR #${{ github.event.number }}&quot; &gt;&gt; &quot;$GITHUB_ENV&quot;</pre>
+</div></div><p>This snippet defines a job called <code>deploy</code> that is responsible for deleting the PR environment when the pull request is closed. Additionally, it defines a step that checks out the repository code within the job using the <code>checkout</code> action. Finally, the snippet defines a step that prepares the <code>BNS_ENV_NAME</code> environment variable that includes the pull request number and which is also the name of the environment to be deleted.<br/><br/><strong>Delete preview with Bunnyshell Step</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">    - name: Delete with Bunnyshell
+      uses: bunnyshell/delete-pr-environment@v1
+      with:
+      token: ${{ secrets.BUNNYSHELL_ACCESS_TOKEN }}
+      organisation-id: ${{ vars.BUNNYSHELL_ORGANISATION_ID }}
+      project-id: ${{ vars.BUNNYSHELL_PROJECT_ID }}
+      environment-name: ${{ env.BNS_ENV_NAME }}</pre>
+</div></div><p>Behind the scenes, the Bunnyshell action is doing several things:</p><ul><li><p>It checks if an environment with the given name exists. If it does, it proceeds to the next step; if it doesn't, it ends the action.</p></li><li><p>It deletes the environment using the provided access token.<br/></p></li></ul></li><li><p>Add changes to the staging area and create a commit.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: bash; gutter: false; theme: Confluence" data-theme="Confluence">git add .
+git commit -m &quot;Add actions workflow to deploy preview environments in pull requests&quot;</pre>
+</div></div><p /></li></ol><h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-Testtheworkflows">Test the workflows</h2><ol start="1"><li><p>Firstly push the local branch and <a class="external-link" href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request" rel="nofollow">create a pull request</a>. Review, then <a class="external-link" href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/merging-a-pull-request" rel="nofollow">merge the pull request</a> so that the workflows we created earlier can be triggered for PRs targeting the <code>main</code> branch.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: bash; gutter: false; theme: Confluence" data-theme="Confluence">git push origin add-preview-environments</pre>
+</div></div><p /></li><li><p>Add repository variables and secrets to help Bunnyshell identify and access your environment.</p><ul><li><p><a class="external-link" href="https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository" rel="nofollow">Add an encrypted secret</a> to your Github repository containing the <a class="external-link" href="https://environments.bunnyshell.com/access-token" rel="nofollow">Bunnyshell Access Token </a>from your account.</p></li><li><p>Add two <a class="external-link" href="https://docs.github.com/en/actions/learn-github-actions/variables#creating-configuration-variables-for-a-repository" rel="nofollow">repository variables</a>  for <code>BUNNYSHELL_ORGANISATION_ID</code> and <code>BUNNYSHELL_PROJECT_ID</code>. You can find these IDs in the URL path for your environment, in the example below 577 is the organisation ID and 873 is the project ID for the environment I’m using in the previews.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: bash; gutter: false; theme: Confluence" data-theme="Confluence">https://environments.bunnyshell.com/577/projects/873/environments/9576</pre>
+</div></div><p /></li></ul></li><li><p>Now that we have our GitHub Actions workflow set up, it's time to test it out. Here's a general guide on how you can do this:</p></li></ol><p style="margin-left: 30.0px;"><strong>Make some changes:</strong> Start by making some changes to your code. This could be anything - a new feature, a bug fix, or even a simple comment. The goal here is to create a change that we can submit as a pull request.</p><p style="margin-left: 30.0px;"><strong>Create a new branch:</strong> After making your changes, create a new branch in your repository. This branch will contain your changes and will be used to create the pull request.</p><p style="margin-left: 30.0px;"><strong>Commit your changes:</strong> Commit your changes to this new branch. Remember to write a clear and concise commit message that describes what changes you've made.</p><p style="margin-left: 30.0px;"><strong>Push your branch:</strong> Push your branch to your GitHub repository. This will make your branch and its changes available online on GitHub.</p><p style="margin-left: 30.0px;"><strong>Create a pull request:</strong> Finally, go to your GitHub repository and create a new pull request. Select your branch in the &quot;compare&quot; dropdown, and follow the prompts to create the pull request.</p><p><br/><br/>You can view the progress and results of the workflow in the &quot;Actions&quot; tab of your GitHub repository.</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" width="680" loading="lazy" src="attachments/2253422593/2254143520.png?width=680" data-image-src="attachments/2253422593/2254143520.png" data-height="373" data-width="831" data-unresolved-comment-count="0" data-linked-resource-id="2254143520" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="github-workflow-deploy-preview-environments-pull-request.png" data-base-url="https://bunnyshell.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2253422593" data-linked-resource-container-version="14" data-media-id="2989b1ab-1767-410a-99db-04f39dea99b7" data-media-type="file"></span><p /><p>4. Access the newly deployed preview environment endpoints in your PR comment.</p><span class="confluence-embedded-file-wrapper image-center-wrapper"><img class="confluence-embedded-image image-center" loading="lazy" src="attachments/2253422593/2254569473.png" data-image-src="attachments/2253422593/2254569473.png" data-height="264" data-width="934" data-unresolved-comment-count="0" data-linked-resource-id="2254569473" data-linked-resource-version="2" data-linked-resource-type="attachment" data-linked-resource-default-alias="comment-pr-preview-environment-github-actions-workflow.png" data-base-url="https://bunnyshell.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2253422593" data-linked-resource-container-version="14" data-media-id="10ed99a7-3d0d-49c6-b581-89502d9233d8" data-media-type="file"></span><p /><h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-Troubleshootingcommonissues">Troubleshooting common issues</h2><p>Here are a few troubleshooting tips:</p><ol start="1"><li><p><strong>Workflow doesn't trigger:</strong> If your workflow isn't triggering when you expect it to, check the <code>on</code> section of your workflow file. Make sure you've specified the correct events and branches.</p></li><li><p><strong>Workflow fails:</strong> If your workflow fails, check the logs in the &quot;<strong>Actions</strong>&quot; tab of your GitHub repository. The logs will show you which step failed and provide an error message that can help you troubleshoot the issue.</p></li><li><p><strong>Environment doesn't start in Bunnyshell:</strong> If your environment doesn't start in Bunnyshell, check the <code>bunnyshell.yaml</code> file. Make sure all the services and their configurations are correct. Also, check the logs in Bunnyshell for any error messages.</p></li><li><p><strong>Secrets and Variables aren't available in workflow:</strong> If your secrets aren't available in your workflow, make sure you've added them to the &quot;Secrets&quot; section of your repository settings. <em>Also, remember that secrets are not passed to workflows that are triggered by pull requests from forks.</em></p></li><li><p><strong>Workflow takes a long time to run:</strong> If your workflow takes a long time to run, consider optimizing your <code>bunnyshell.yml</code> and/or Dockerfiles. </p></li></ol><p>Remember, these are just general troubleshooting tips. The exact solution might vary depending on your specific setup and issue. Also consider reaching out to the <a class="external-link" href="https://www.bunnyshell.com/book-demo/" rel="nofollow">Bunnyshell support</a> team for further assistance.</p><h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-Advancedusecases">Advanced use cases</h2><p>While we've covered the basics of setting up preview environments with GitHub Actions and Bunnyshell, there are many advanced use cases that can further enhance your development workflow. Here are a few examples:</p><ol start="1"><li><p><strong>Selecting Pull Requests Based on Tags:</strong> GitHub Actions allows you to trigger workflows based on various events, including the tagging of pull requests. This can be useful if you want to create preview environments only for certain pull requests. For example, you could set up your workflow to only run when a pull request is tagged with <code>preview</code>.</p></li><li><p><strong>Running Automated Tests:</strong> One of the major benefits of preview environments is the ability to test your changes in a live, production-like environment. You can take this a step further by setting up your GitHub Actions workflow to automatically run tests in the preview environment. This can help catch issues early in the development process.</p></li><li><p><strong>Building in the CI and Pushing to an Image Registry:</strong> If you're building the container images in the CI, you can set up your workflow to push them to an image registry where Bunnyshell can pull them from and deploy in the Kubernetes cluster.</p></li><li><p><strong>Starting and Stopping Previews on Demand:</strong> While preview environments are typically tied to pull requests, you can start and stop preview environments on demand by commenting on the PR with a specific keyword.</p></li><li><p><strong>Advanced Data Strategies:</strong> With platforms like <a class="external-link" href="https://neon.tech/" rel="nofollow">Neon</a> and <a class="external-link" href="https://planetscale.com/" rel="nofollow">PlanetScale</a>, you can implement advanced data strategies in your preview environments. For example, their data branching model allows you to create isolated copies of your database in the cloud, providing a safe and efficient way to test your changes with realistic data. This allows you to test your changes with realistic data, without exposing sensitive information or affecting your production database.</p></li></ol><p /><h2 id="DeployPreviewenvironmentsinPullRequestswithGithubActionsandBunnyshell-Conclusions">Conclusions</h2><p>We've covered a lot of ground in this guide, from understanding the basics of preview environments, GitHub Actions workflows, and the Bunnyshell configuration file, to exploring advanced use cases and best practices. Armed with this knowledge, now you can implement dynamic preview environments in your own projects. If you’d like to learn more about Bunnyshell read our comprehensive <a class="external-link" href="https://documentation.bunnyshell.com/docs" rel="nofollow">docs</a> and if you haven't done so already, consider <a class="external-link" href="https://environments.bunnyshell.com/register" rel="nofollow">registering for a free account</a>.</p>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2253422593/2254143520.png">github-workflow-deploy-preview-environments-pull-request.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2253422593/2254667777.png">comment-pr-preview-environment-github-actions-workflow.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2253422593/2254569473.png">comment-pr-preview-environment-github-actions-workflow.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2253422593/2255912964.png">github-actions-workflow-diagram-preview-environments-bunnyshell-kubernetes.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                 
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on Jun 12, 2023 20:18</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>
